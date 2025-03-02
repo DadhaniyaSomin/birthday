@@ -1,10 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Music } from 'lucide-react';
+import { Music, Pause } from 'lucide-react';
 import Musicc from './kudinu1.mp3';
 
 // You'll need to import your image
-// Replace 'path/to/your/image.jpg' with your actual image path
 import TopImage from './images/top.jpg';
 
 const Message = () => {
@@ -25,11 +24,39 @@ const Message = () => {
   const toggleMusic = () => {
     if (isPlaying) {
       audioRef.current?.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current?.play();
+      audioRef.current?.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(error => {
+          console.error('Failed to play audio:', error);
+        });
     }
-    setIsPlaying(!isPlaying);
   };
+
+  // Add a click listener to the entire document for mobile users
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      if (audioRef.current && !isPlaying) {
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(() => {
+            // Ignore errors - user may need to click the specific button
+          });
+      }
+    };
+
+    // Add the event listener only once when the component mounts
+    document.addEventListener('click', handleDocumentClick, { once: true });
+
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [isPlaying]);
 
   // Animation variants object for motion elements
   const animations = {
@@ -48,15 +75,10 @@ const Message = () => {
       animate: { opacity: 1, scale: 1, y: 0 },
       transition: { delay: 0.8, duration: 0.5, type: "spring" }
     },
-    crown: {
-      initial: { opacity: 0, y: -10, scale: 0.5 },
-      animate: { opacity: 1, y: -5, scale: 1 },
-      transition: { delay: 1.2, duration: 0.5, type: "spring", bounce: 0.4 }
-    },
-    clown: {
-      initial: { opacity: 0, x: 15, rotate: 20 },
-      animate: { opacity: 1, x: 0, rotate: 0 },
-      transition: { delay: 1.3, duration: 0.6, type: "spring", bounce: 0.5 }
+    floatingMusicButton: {
+      initial: { opacity: 0, y: 20 },
+      animate: { opacity: 1, y: 0 },
+      transition: { delay: 1.0, duration: 0.5 }
     }
   };
 
@@ -67,28 +89,45 @@ const Message = () => {
         <source src={Musicc} type="audio/mpeg" />
       </audio>
 
-      {/* Music Control Button */}
+      {/* Desktop Music Control Button (hidden on mobile) */}
       <motion.button
-        className="absolute top-4 right-4 p-2 rounded-full bg-pink-500 text-white flex items-center gap-2"
+        className="absolute top-4 right-4 p-2 rounded-full bg-pink-500 text-white flex items-center gap-2 hidden md:flex"
         onClick={toggleMusic}
         {...animations.musicIcon}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >
         <Music className="w-6 h-6" />
-        <span className="hidden md:inline">{isPlaying ? 'Pause Music' : 'Play Music'}</span>
+        <span>{isPlaying ? 'Pause Music' : 'Play Music'}</span>
+      </motion.button>
+
+      {/* Mobile-friendly floating music button (only visible on mobile) */}
+      <motion.button
+        className="fixed bottom-6 right-6 p-4 rounded-full bg-pink-500 text-white shadow-lg md:hidden z-50"
+        onClick={toggleMusic}
+        {...animations.floatingMusicButton}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        style={{ 
+          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '60px',
+          height: '60px'
+        }}
+      >
+        {isPlaying ? <Pause className="w-8 h-8" /> : <Music className="w-8 h-8" />}
       </motion.button>
 
       <div className="relative">
-        {/* Top Image with Crown and Clown */}
+        {/* Top Image */}
         <motion.div 
-          className="absolute left-1/2 -top-14 transform -translate-x-1/2 z-10" style={{ top: "-1.5rem" , left: "44%" }}
+          className="absolute transform -translate-x-1/2 z-10" 
+          style={{ top: "-1.5rem", left: "44%" }}
           {...animations.topImage}
         >
-          {/* The base image with decorations */}
           <div className="relative">
-            
-            {/* Main image */}
             <img 
               src={TopImage} 
               alt="Decorative" 
@@ -105,14 +144,21 @@ const Message = () => {
             Dear Madam Ji,
           </h1>
           <p className="text-xl text-gray-700 leading-relaxed mb-6">
-          Happiest Birthday, my precious Kudi! 🎉🎂💕
+            Happiest Birthday, my precious Kudi! 🎉🎂💕
 
-          Wishing you a lifetime of laughter, love, and endless joy! You are truly sabse khaas, and I hope this year brings you everything your dil desires and more. May your days be filled with happiness, success, and countless sundar moments with the brightest muskurahat on your face! 🎈.
-          You deserve all the love, warmth, and blessings in the world! Stay the **pataka** you are, keep shining **jaise ek chamakta sitara**, and keep **levitating** through life—effortless, fearless, and full of magic! ✨.No matter where life takes us or how far the distance may be, our dosti will always stay strong. Miles can never change the bond we share, because some connections are meant to last forever. You’re not just a friend—you’re someone who truly matters, a part of my journey that I’ll always cherish. 💞 Hope your day is as beautiful as your heart 💞.
+            Wishing you a lifetime of laughter, love, and endless joy! You are truly sabse khaas, and I hope this year brings you everything your dil desires and more. May your days be filled with happiness, success, and countless sundar moments with the brightest muskurahat on your face! 🎈.
+            You deserve all the love, warmth, and blessings in the world! Stay the <strong>pataka</strong> you are, keep shining <strong>jaise ek chamakta sitara</strong>, and keep <strong>levitating</strong> through life—effortless, fearless, and full of magic! ✨.No matter where life takes us or how far the distance may be, our dosti will always stay strong. Miles can never change the bond we share, because some connections are meant to last forever. You're not just a friend—you're someone who truly matters, a part of my journey that I'll always cherish. 💞 Hope your day is as beautiful as your heart 💞.
           </p>
           <span className="text-3xl">🎂 ✨ 🎁</span>
         </motion.div>
       </div>
+
+      {/* Initial music play prompt - visible only on mobile */}
+      {!isPlaying && (
+        <div className="fixed top-0 left-0 right-0 bg-pink-500 text-white py-2 text-center md:hidden">
+          Tap anywhere to play music! 🎵
+        </div>
+      )}
     </div>
   );
 };
